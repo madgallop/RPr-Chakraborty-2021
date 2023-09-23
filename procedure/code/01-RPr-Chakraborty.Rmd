@@ -605,7 +605,7 @@ acs_covid %>%
 ```
 
 The join worked, highlighting the same 13 counties with inconsistent incidence rates.
-This also confirms that our reproduced dependent variable is identical to the original dependent variable with the exception of these three counties.
+This also confirms that our reproduced dependent variable is identical to the original dependent variable with the exception of these thirteen counties.
 
 ## Bivariate nonparametric correlation analysis
 
