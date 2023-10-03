@@ -7,7 +7,7 @@ editor_options:
   markdown:
     wrap: sentence
 knit: (function(inputFile, encoding) {
-  rmarkdown::render(inputFile, encoding = encoding, output_dir = "../../docs") })
+  rmarkdown::render(inputFile, encoding = encoding, output_dir = "/Users/madeleinegallop/Documents/MachineLearningS23/madgallop.github.io/docs") })
 ---
 
 Version 2.1 \| First Created September 21, 2023 \| Updated June 26, 2023
@@ -366,7 +366,7 @@ acs_covid[is.na(acs_covid$apov_pct), ]$apov_pct <- 0
 
 ```
 
-## Write reuseable function for creating maps 
+## Write reuseable function for creating maps
 
 ```{r custom map}
 create_custom_map <- function(data, 
@@ -431,7 +431,6 @@ tm_covid_rates <- create_custom_map(
 tm_covid_rates
 ```
 
-
 ## Map disability rates
 
 **Unplanned deviation for reproduction**: We also map the spatial distribution of the percent of people with any disability to improve our understanding of the geographic patterns and relationships of between the overarching independent variable (percentage of people with disability) and the dependent variable (COVID-19 incidence rate).
@@ -457,7 +456,6 @@ tm_disability_rates
 
 
 ```
-
 
 ## Descriptive statistics
 
@@ -908,8 +906,6 @@ tm_spatialepi_clusters <- create_custom_map(
 tm_spatialepi_clusters
 ```
 
-
-
 **Unplanned deviation for reproduction**: The `SpatialEpi` implementation of Kulldorff spatial scan statistics does not calculate local relative risk or cluster relative risk.
 Therefore, the next step is to calculate local and cluster relative risk (workflow step 7).
 
@@ -999,7 +995,6 @@ rm(class_freq)
 tm_spatialepi_local_risk_class
 ```
 
-
 Next, map the cluster relative risk scores for comparison.
 Note that following the original study classification methodology, counties outside of clusters are assigned the lowest risk class of `1`.
 
@@ -1036,7 +1031,6 @@ rm(class_freq)
 
 tm_spatialepi_cluster_risk_class
 ```
-
 
 Comparing the cluster and local relative risk classifications for regions like the Southeast, it is apparent that some areas of high risk are represented with large clusters that have an averaging effect on the cluster-based relative risk score.
 This effect is more pronounced for clusters with low compactness (e.g. the Southeast cluster stretched over the "black belt" region from Louisiana and Arkansas to Georgia) than clusters with higher compactness (e.g. New York City) because the circular shape of clusters includes more low-risk counties.
@@ -1831,7 +1825,6 @@ gee_resid <- data.frame(
 # blog: https://www.datascienceblog.net/post/machine-learning/interpreting_generalized_linear_models
 ```
 
-
 ```{r map-residuals}
 tm_gee_residuals <- tm_shape(gee_resid) +
   tm_polygons("response",
@@ -2077,37 +2070,40 @@ We quickly diagnosed whether the clustering method was significantly skewing the
 Fortunately, we found the GLM coefficients to be consistent, and in most cases stronger, than the GEE model coefficients.
 Future replications of this research should consider selecting an alternative inferential statistical model which explicitly accounts for spatial dependence.
 
-Upon revisiting the report in Fall 2023, certain sections of the study were reorganized and clarified. 
-The conclusion section was created and closely edited to provide the reader with a quick and interpretable reference point to learn about what in the study was effective and how it contributes to scientific knowledge. 
-The maps were made more efficient through the creation of the function 'create_custom_map', which was reused in most of the maps in this reproduction study. More work can still be done to apply this function to the SaTScan maps as well as the Race Model Residual map. 
-Finally, the 'Rational for Updated Report' section was moved to the end of the study, and a couple aesthetic changes were implemented, including adjusting the color ramp on the final choropleth map and transposing the missing data table with Kable and/or KableExtra functions. 
-All in all, the final changes implemented in this report serve to make it more readable, visually cohesive, and concise. 
+Upon revisiting the report in Fall 2023, certain sections of the study were reorganized and clarified.
+The conclusion section was created and closely edited to provide the reader with a quick and interpretable reference point to learn about what in the study was effective and how it contributes to scientific knowledge.
+The maps were made more efficient through the creation of the function 'create_custom_map', which was reused in most of the maps in this reproduction study.
+More work can still be done to apply this function to the SaTScan maps as well as the Race Model Residual map.
+Finally, the 'Rational for Updated Report' section was moved to the end of the study, and a couple aesthetic changes were implemented, including adjusting the color ramp on the final choropleth map and transposing the missing data table with Kable and/or KableExtra functions.
+All in all, the final changes implemented in this report serve to make it more readable, visually cohesive, and concise.
 
 # Conclusions
 
 Our attempt to reproduce the original study was partially successful, leading to similar, but inexact results compared to the original study.
 Some of this variability can be attributed to differences in the computational environments and analytical approaches.
 
-However, it's important to highlight that our reanalysis of the study and the introduction of certain parameter changes added a layer of complexity to our findings. 
+However, it's important to highlight that our reanalysis of the study and the introduction of certain parameter changes added a layer of complexity to our findings.
 Despite these variations, our results provide support for the conclusions drawn in the original study.
 Nevertheless, our reproduction study underscores the critical importance of replication and the need for a comprehensive review of research design elements, including internal validity and sensitivity to key parameters.
 
-In line with the original study, we concur with the author's cautious interpretation, emphasizing the associations at the county level and the necessity for additional data and analysis. 
+In line with the original study, we concur with the author's cautious interpretation, emphasizing the associations at the county level and the necessity for additional data and analysis.
 It's worth noting that our replication study identified several sources of uncertainty, including ecological fallacy, scale dependency, the modifiable areal unit problem, variable measurement, and spatial dependency.
 
-There is a risk of ecological fallacy with this research design, as interpreting county-level statistics as definitive proof of indevidual-level relationships, especially in counties with small populations, can be problematic, especially given that counties are not weighted by population. Therefore, in this analysis a few people with disabilities in a rural county are collectively weighted as one observation with equal weight to many people with disabilities in an urban county as another observation. This introduces potential scale-dependent biases. 
+There is a risk of ecological fallacy with this research design, as interpreting county-level statistics as definitive proof of indevidual-level relationships, especially in counties with small populations, can be problematic, especially given that counties are not weighted by population.
+Therefore, in this analysis a few people with disabilities in a rural county are collectively weighted as one observation with equal weight to many people with disabilities in an urban county as another observation.
+This introduces potential scale-dependent biases.
 
 The modifiable areal unit problem (MAUP) further complicates the analysis, particularly in lgiht of varying county population sizes at the county level, which all carry equal weights in the analysis.
 
 Finally, we must acknowledge the challenges posed by the testing and reporting of COVID-19 cases and uncertainty in the ACS data, which can influence cross-tabulations of demographic characteristics.
 
 Our study attempted to mitigate measurement uncertainty by aggregating data across multiple years and using relatively large geographic units (counties).
-We also considered spatial dependence by clustering county observations based on state and COVID risk classification. 
+We also considered spatial dependence by clustering county observations based on state and COVID risk classification.
 However, our approach does not account for spatial dependence between counties in different clusters, even if they are adjacent.
 
 In summary, while our replication results exhibited some disparities from the original study due to methodological and computational differences, they still indicate that individuals with disabilities, particularly those from racial/ethnic minority backgrounds and in poverty, may face heightened vulnerabilities.
 We echo the original study's emphasis on the county-level nature of these associations and the need for further data and research.
-It is crucial to recognize that the relationships observed at the county level may not necessarily hold at the individual level. 
+It is crucial to recognize that the relationships observed at the county level may not necessarily hold at the individual level.
 Further investigations are warranted, especially at finer geographic scales, to reliably infer the relationships between minority individuals with disabilities and COVID-19 morbidity and mortality.
 
 ### Rationale for updated report
