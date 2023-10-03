@@ -2,12 +2,12 @@
 title: "Reproduction of Chakraborty 2021: An intracategorical analysis of COVID-19 and people with disabilities"
 author: "Joseph Holler, Junyi Zhou, Peter Kedron, Drew An-Pham, Derrick Burt, Madeleine Gallop"
 date: "`r Sys.Date()`"
-output: pdf_document
+output: html_document
 editor_options:
   markdown:
     wrap: sentence
 knit: (function(inputFile, encoding) {
-  rmarkdown::render(inputFile, encoding = encoding, output_dir = "../../docs/report") })
+  rmarkdown::render(inputFile, encoding = encoding, output_dir = "../../docs") })
 ---
 
 Version 2.1 \| First Created September 21, 2023 \| Updated June 26, 2023
@@ -368,7 +368,7 @@ acs_covid[is.na(acs_covid$apov_pct), ]$apov_pct <- 0
 
 ## Write reuseable function for creating maps 
 
-```{r missing data}
+```{r custom map}
 create_custom_map <- function(data, 
                               main_var, 
                               title, 
