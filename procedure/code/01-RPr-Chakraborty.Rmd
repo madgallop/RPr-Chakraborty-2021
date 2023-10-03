@@ -2003,7 +2003,7 @@ We therefore ran another set of the five GEE models using data provided by the o
 
 # Emily and Madeleine's Integrated Discussion
 
-In this section, we provide a comprehensive overview of our reproduction analysis, focusing on key findings, methodological adjustments, and implications for the original study's contributions to scientific knowledge.
+In this section, we provide a comprehensive overview of our reproduction analysis, focusing on key findings, methodological adjustments, and implications for the original study's contributions to scientific knowledge."
 
 The choropleth map we made in the **first part** of the reproduction analysis (Figure 2) reveals an identical spatial pattern to that of the original study's Figure 1, confirming the equivalence of our dependent variable with that of the original study.
 Both maps revealed that COVID-19 cases were distributed unevenly across space.
