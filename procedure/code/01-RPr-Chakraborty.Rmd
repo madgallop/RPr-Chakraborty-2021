@@ -351,7 +351,7 @@ rm(acs, acs_derived, covid)
 ## Missing data
 
 **Unplanned deviation for reproduction**: There is one county with missing disability and poverty data.
-This was not mentioned in the original study or in our pre-analyis plan.
+This was not mentioned in the original study or in our pre-analysis plan.
 However, we replace the missing data with zeros, producing results identical to Chakraborty's.
 
 ```{r missing data}
@@ -366,53 +366,98 @@ acs_covid[is.na(acs_covid$apov_pct), ]$apov_pct <- 0
 
 ```
 
+## Write reuseable function for creating maps 
+
+```{r missing data}
+create_custom_map <- function(data, 
+                              main_var, 
+                              title, 
+                              palette, 
+                              border_color, 
+                              border_alpha, 
+                              lwd, 
+                              popus_vars,
+                              legend_position, 
+                              legend_title_size,
+                              legend_text_size,
+                              style,
+                              labels = NULL,
+                              midpoint = NULL
+                              ){
+    map <- tm_shape(data) +
+    tm_polygons(main_var,
+      title = title,
+      style = style,
+      border.alpha = border_alpha,
+      lwd = lwd,
+      palette = palette,
+      popus.vars = popus_vars,
+      colorNA = NULL,
+      labels = labels,
+      midpoint = midpoint
+    ) +
+    tm_shape(state) +
+    tm_borders(border_color, lwd = .5) +
+    tm_layout(
+      legend.position = legend_position,
+      legend.title.size = legend_title_size,
+      legend.text.size = legend_text_size
+    )
+  
+  return(map)
+}
+
+```
+
 ## Map COVID-19 incidence
 
 Map the county level distribution of COVID-19 incidence rates, comparing to Figure 1 of the original study.
 
 ```{r map-covid-rates, message = FALSE}
-tm_covid_rates <- tm_shape(acs_covid) +
-  tm_polygons("covid_rate",
-    title = "COVID-19 Cases per 100,000 people\n(22 January 2020 to 1 August 2020)",
-    style = "quantile",
-    border.alpha = .2,
-    lwd = 0.2,
-    palette = "Oranges",
-  ) +
-  tm_shape(state) +
-    tm_borders("grey", lwd = .5) +
-  tm_layout(
-    legend.position = c("left", "bottom"),
-    legend.title.size = 0.8,
-    legend.text.size = 0.5
-  )
-
+tm_covid_rates <- create_custom_map(
+  data = acs_covid,
+  main_var = "covid_rate",
+  title = "COVID-19 Cases per 100,000 people\n(22 January 2020 to 1 August 2020)",
+  palette = "Oranges",
+  border_color = "grey",
+  border_alpha = 0.2,
+  lwd = 0.2,
+  popus_vars = c("fips", "clusterID"),
+  legend_position = c("left", "bottom"),
+  legend_title_size = 0.8,
+  legend_text_size = 0.5,
+  style = "quantile"  # Specify the style here
+)
 tm_covid_rates
 ```
+
 
 ## Map disability rates
 
 **Unplanned deviation for reproduction**: We also map the spatial distribution of the percent of people with any disability to improve our understanding of the geographic patterns and relationships of between the overarching independent variable (percentage of people with disability) and the dependent variable (COVID-19 incidence rate).
 
-```{r map-disability-rates, message = FALSE}
-tm_disability_rates <- tm_shape(acs_covid) +
-  tm_polygons("dis_pct",
-    title = "Percent of People with Disability\n(ACS 2014-2018)",
-    style = "quantile",
-    border.alpha = .2,
-    lwd = 0.2,
-    palette = "Oranges"
-  ) +
-  tm_shape(state) +
-  tm_borders("grey", lwd = .5) +
-  tm_layout(
-    legend.position = c("left", "bottom"),
-    legend.title.size = 0.8,
-    legend.text.size = 0.5
-  )
+```{r}
+
+tm_disability_rates <- create_custom_map(
+  data = acs_covid,
+  main_var = "dis_pct",
+  title = "Percent of People with Disability\n(ACS 2014-2018)",
+  palette = "Oranges",
+  border_color = "grey",
+  border_alpha = 0.2,
+  lwd = 0.2,
+  popus_vars = c("fips", "clusterID"),  # Replace with your desired popup variables
+  legend_position = c("left", "bottom"),
+  legend_title_size = 0.8,
+  legend_text_size = 0.5,
+  style = "quantile"  # Specify the style parameter here
+)
 
 tm_disability_rates
+
+
 ```
+
 
 ## Descriptive statistics
 
@@ -664,8 +709,8 @@ correlations %>%
 ```
 
 Three variables change significance levels, with *Native American* and *Other* races gaining significance and *age 18-34* losing significance.
-Two correlations change direction, with both *Native American* race (illustrated in scatterplot below) and *Female* households switching from positive correlations to negative correlations.
-Instabilities between the parametric and non-parametic correlations arise from variables with very skewed distributions and/or weak correlations at the county level.
+Two correlations change direction, with both *Native American* race (illustrated in scatter plot below) and *Female* households switching from positive correlations to negative correlations.
+Instabilities between the parametric and non-parametric correlations arise from variables with very skewed distributions and/or weak correlations at the county level.
 Some difference may also be attributable to the 13 counties with data errors in the COVID-19 Incidence Rate.
 In such distributions, outlier observations have more weight in the parametric Person's R test than in the non-parametric Spearman's Rho test.
 
@@ -844,28 +889,26 @@ acs_covid <- acs_covid[, 1:which(colnames(acs_covid) == "or_incidence")] %>%
 **Planned deviation for reproduction**: Map the `SpatialEpi` cluster results.
 
 ```{r map-clusters}
-tm_spatialepi_clusters <-
-  tm_shape(state) +
-    tm_fill("gray98") +
-  tm_shape(acs_covid) +
-  tm_polygons(col = "isCluster",
-          palette = "-Oranges",
-          popup.vars = c("fips", "clusterID"),
-          colorNA = NULL,
-          title = "SpatialEpi Kulldorff COVID-19 Clusters",
-          border.col = "white",
-          lwd = 0.2,
-          border.alpha = 0.2) +
-  tm_shape(state) +
-    tm_borders("grey", lwd = 0.5) +
-  tm_layout(
-    legend.position = c("left", "bottom"),
-    legend.title.size = 0.8,
-    legend.text.size = 0.5
-  )
+
+tm_spatialepi_clusters <- create_custom_map(
+  data = acs_covid,
+  main_var = "isCluster",
+  title = "SpatialEpi Kulldorff COVID-19 Clusters",
+  palette = "-Oranges",
+  border_color = "gray",
+  border_alpha = 0.03,
+  lwd = 0.2,
+  popus_vars = c("fips", "clusterID"),
+  legend_position = c("left", "bottom"),
+  legend_title_size = 0.8,
+  legend_text_size = 0.5,
+  style = "quantile"  # Specify the style parameter if needed
+)
 
 tm_spatialepi_clusters
 ```
+
+
 
 **Unplanned deviation for reproduction**: The `SpatialEpi` implementation of Kulldorff spatial scan statistics does not calculate local relative risk or cluster relative risk.
 Therefore, the next step is to calculate local and cluster relative risk (workflow step 7).
@@ -934,28 +977,28 @@ class_freq$label <- paste0(class_freq$loc_class,
                            ")")
 
 # Map Local Relative Risk scores
-tm_spatialepi_local_risk_class <- tm_shape(acs_covid) +
-  tm_polygons("loc_class",
-    title = "Local Relative Risk Class",
-    border.col = "white",
-    border.alpha = .2,
-    lwd = 0.2,
-    palette = "Oranges",
-    style = "cat",
-    labels = class_freq$label
-  ) +
-  tm_shape(state) +
-  tm_borders("grey", lwd = .5) +
-  tm_layout(
-    legend.position = c("left", "bottom"),
-    legend.title.size = 0.8,
-    legend.text.size = 0.5
-  )
+tm_spatialepi_local_risk_class <- create_custom_map(
+  data = acs_covid,
+  main_var = "loc_class",
+  title = "Local Relative Risk Class",
+  border_color = "gray",
+  border_alpha = 0.02,
+  lwd = 0.2,
+  palette = "Oranges",
+  style = "cat",  # Style parameter for categorical data
+  popus_vars = c("fips", "clusterID"),  # Specify popup variables if needed
+  legend_position = c("left", "bottom"),
+  legend_title_size = 0.8,
+  legend_text_size = 0.5,
+  labels = class_freq$label
+)
+
 
 rm(class_freq)
 
 tm_spatialepi_local_risk_class
 ```
+
 
 Next, map the cluster relative risk scores for comparison.
 Note that following the original study classification methodology, counties outside of clusters are assigned the lowest risk class of `1`.
@@ -973,28 +1016,27 @@ class_freq$label <- paste0(class_freq$cluster_class,
                            ")")
 
 # map cluster relative risk scores
-tm_spatialepi_cluster_risk_class <- tm_shape(acs_covid) +
-  tm_polygons("cluster_class",
-    title = "Cluster Relative Risk Class",
-    border.col = "white",
-    border.alpha = .2,
-    lwd = 0.2,
-    palette = "Oranges",
-    style = "cat",
-    labels = class_freq$label
-  ) +
-  tm_shape(state) +
-  tm_borders("grey", lwd = .5) +
-  tm_layout(
-    legend.position = c("left", "bottom"),
-    legend.title.size = 0.8,
-    legend.text.size = 0.5
-  )
+tm_spatialepi_cluster_risk_class <- create_custom_map(
+  data = acs_covid,
+  main_var = "cluster_class",
+  title = "Cluster Relative Risk Class",
+  palette = "Oranges",
+  border_color = "gray",
+  border_alpha = 0.02,
+  lwd = 0.2,
+  style = "cat",  # Style parameter for categorical data
+  labels = class_freq$label,
+  popus_vars = c("fips", "clusterID"),  # Specify popup variables if needed
+  legend_position = c("left", "bottom"),
+  legend_title_size = 0.8,
+  legend_text_size = 0.5
+)
 
 rm(class_freq)
 
 tm_spatialepi_cluster_risk_class
 ```
+
 
 Comparing the cluster and local relative risk classifications for regions like the Southeast, it is apparent that some areas of high risk are represented with large clusters that have an averaging effect on the cluster-based relative risk score.
 This effect is more pronounced for clusters with low compactness (e.g. the Southeast cluster stretched over the "black belt" region from Louisiana and Arkansas to Georgia) than clusters with higher compactness (e.g. New York City) because the circular shape of clusters includes more low-risk counties.
@@ -1352,7 +1394,7 @@ table(acs_covid$cluster_class, acs_covid$gini_class) %>%
 Indeed, SpatialEpi has identified more than 300 counties with above normal risk that were not identified by SaTScan.
 Meanwhile, SaTScan identified 78 counties with above normal risk that were not identified by SpatialEpi.
 
-The maps and crosstabulation above indicate that there are important differences between the SaTScan and SpatialEpi computational environments for calculating secondary clusters.
+The maps and cross tabulation above indicate that there are important differences between the SaTScan and SpatialEpi computational environments for calculating secondary clusters.
 
 We summarize our understanding of the computational differences for default settings below, based on close examination of our software outputs, technical documentation for SaTScan, and the documentation and code repository for SpatialEpi.
 
@@ -1518,11 +1560,11 @@ gee_data <- read_sf(here("data", "derived", "public", "gee_data.gpkg"))
 ## GEE models
 
 The generalized estimating equation (GEE) models were used to test association between intra-categorical rates of disability and COVID-19 incidence rates while accounting for spatial clustering.
-A separate hypothesis was formulated for each type of subcategorization of PwDs, numbered H2.1 through H2.5 in Table 4.
+A separate hypothesis was formulated for each type of sub categorization of PwDs, numbered H2.1 through H2.5 in Table 4.
 
 As specified by the author, "GEEs extend the generalized linear model to accommodate clustered data, in addition to relaxing several assumptions of traditional regression (i.e., normality)".
 Additionally, the author noted that "clusters of observations must be defined based on the assumption that observations within a cluster are correlated while observations from different clusters are independent." All five GEE models were specified with exchangeable correlation matrices, gamma distributions, and logarithmic link function.
-These specifications were chosen after testing each alternative and choosing the models with the best quasilikelihood under the independence model criterion (QIC).
+These specifications were chosen after testing each alternative and choosing the models with the best quasi likelihood under the independence model criterion (QIC).
 
 This accomplishes the step 11 of the workflow diagram.
 
@@ -1750,7 +1792,7 @@ Compared to the change in computational environment, fixing the error in the COV
 
 Our more significant adjustments could be considered reanalyses, in which we re-conceptualized COVID-19 clusters first as all counties included in SaTScan GINI-Optimized clusters, and second as all counties included in SpatialEpi clusters.
 These two changes further decreased the magnitude of most coefficients as they likely more effectively fulfilled the purpose of controlling for spatial dependence.
-The shifts were most signficant for the Ethnicity model, in which the Hispanic and Non-Hispanic white coefficients lost magnitude beyond the original confidence interval and the Hispanic coefficient is no longer significant.
+The shifts were most significant for the Ethnicity model, in which the Hispanic and Non-Hispanic white coefficients lost magnitude beyond the original confidence interval and the Hispanic coefficient is no longer significant.
 Secondarily, the negative Above poverty level and Male coefficients both increased beyond the range of the original confidence intervals.
 
 Overall, we can see that some coefficients remained significant and robust to changes in computational environment, data errors, and clustering criteria.
@@ -1789,6 +1831,7 @@ gee_resid <- data.frame(
 # blog: https://www.datascienceblog.net/post/machine-learning/interpreting_generalized_linear_models
 ```
 
+
 ```{r map-residuals}
 tm_gee_residuals <- tm_shape(gee_resid) +
   tm_polygons("response",
@@ -1807,9 +1850,6 @@ tm_gee_residuals <- tm_shape(gee_resid) +
     legend.position = c("left", "bottom"),
     legend.title.size = 0.8,
     legend.text.size = 0.5,
-    legend.width = 0.25,
-    legend.hist.size = 0.5,
-    legend.hist.height = 0.15
   )
 
 tm_gee_residuals
@@ -1854,26 +1894,20 @@ gee_resid <- gee_resid %>%
 Map each county's weight in GEE model.
 
 ```{r map-weights}
-tm_gee_weights <- tm_shape(gee_resid) +
-  tm_polygons("w",
-    title = "Race Model Weights",
-    style = "jenks",
-    border.alpha = .2,
-    lwd = 0.2,
-    palette = "Oranges",
-    legend.hist = FALSE,
-    #midpoint = 0
-  ) +
-  tm_shape(state) +
-    tm_borders("grey", lwd = .5) +
-  tm_layout(
-    legend.position = c("left", "bottom"),
-    legend.title.size = 0.8,
-    legend.text.size = 0.5,
-    legend.width = 0.25,
-    legend.hist.size = 0.5,
-    legend.hist.height = 0.15
-  )
+tm_gee_weights <- create_custom_map(
+  data = gee_resid,
+  main_var = "w",
+  title = "Race Model Weights",
+  palette = "Oranges",
+  border_color = "gray",
+  border_alpha = 0.02,
+  lwd = 0.2,
+  style = "jenks",  # Style parameter for data classification
+  popus_vars = NULL,  # Specify popup variables if needed
+  legend_position = c("left", "bottom"),
+  legend_title_size = 0.8,
+  legend_text_size = 0.5
+)
 
 tm_gee_weights
 
@@ -1967,12 +2001,9 @@ We re-classified the GEE clustering IDs based on state and cluster relative risk
 Upon discovering different results in all of our reproduction GEE models compared to the original study, we added new models to assess the extent to which the different computational environment was causing differences in our results.
 We therefore ran another set of the five GEE models using data provided by the original author, expecting to find identical results.
 
-# Emily's Discussion
+# Emily and Madeleine's Integrated Discussion
 
-Our reproduction of the original study was partially successful, leading to similar, but inexact results compared to the original study.
-A portion of the inexactitude may be attributed to differences in the computational environments.
-However, we have also reanalyzed the study and tested its robustness by changing some research parameters.
-Our results suggest support for the conclusions of the original study, but also emphasize the importance of reproduction studies to critically review the full details of the research design, to evaluate internal validity, and to test for uncertainty and robustness to key parameters.
+In this section, we provide a comprehensive overview of our reproduction analysis, focusing on key findings, methodological adjustments, and implications for the original study's contributions to scientific knowledge.
 
 The choropleth map we made in the **first part** of the reproduction analysis (Figure 2) reveals an identical spatial pattern to that of the original study's Figure 1, confirming the equivalence of our dependent variable with that of the original study.
 Both maps revealed that COVID-19 cases were distributed unevenly across space.
@@ -2046,23 +2077,38 @@ We quickly diagnosed whether the clustering method was significantly skewing the
 Fortunately, we found the GLM coefficients to be consistent, and in most cases stronger, than the GEE model coefficients.
 Future replications of this research should consider selecting an alternative inferential statistical model which explicitly accounts for spatial dependence.
 
-With regards to the **overall conclusions** and **research design**, we agree with the original author's cautious interpretation emphasizing "county-level associations" and the need for "additional data and analysis".
-There are at least five sources of uncertainty in this study: ecological fallacy, scale dependency, modifiable areal unit problem, variable measurement, and spatial dependency.
-There is a risk of ecological fallacy with this research design, whereby county-level statistics for the whole population should not be interpreted as definitive inferential proof of individual-level relationships, especially for populations comprising no more than one third of any county.
-Counties are not weighted by population.
-Therefore, in this analysis a few people with disabilities in a rural county are collectively weighted as one observation with equal weight to many people with disabilities in an urban county as another observation.
-There is a real possibility that the study findings are scale-dependent, but it is also impossible to replicate the study using a finer spatial support without also limiting the extent to one or more adjacent states with sub-county data on COVID-19.
-The modifiable areal unit problem (MAUP) may also be a source of uncertainty, especially when considering the variable population sizes of counties, which all carry equal weights in the analysis.
-Finally, there are well-known problems with the testing and reporting of COVID-19 cases across time and space during the pandemic in the United States, and there is also uncertainty in American Community Survey (ACS) data, particularly when cross-tabulating multiple demographic characteristics.
-This study partially mitigates measurement uncertainty by aggregating data across time (more than one year of the pandemic and the five-year ACS estimate) and into relatively large geographic units (counties).
-The study accounts for spatial dependency using the GEE models to cluster county observations by state and COVID risk classification.
-However, the GEE method simply uses correlation matrices to weight each county observation according to the number of observations in its cluster and the overall within-cluster correlation of standard errors.
-The spatial dependence between counties in different clusters is not modelled, even if the counties are adjacent to each other.
+Upon revisiting the report in Fall 2023, certain sections of the study were reorganized and clarified. 
+The conclusion section was created and closely edited to provide the reader with a quick and interpretable reference point to learn about what in the study was effective and how it contributes to scientific knowledge. 
+The maps were made more efficient through the creation of the function 'create_custom_map', which was reused in most of the maps in this reproduction study. More work can still be done to apply this function to the SaTScan maps as well as the Race Model Residual map. 
+Finally, the 'Rational for Updated Report' section was moved to the end of the study, and a couple aesthetic changes were implemented, including adjusting the color ramp on the final choropleth map and transposing the missing data table with Kable and/or KableExtra functions. 
+All in all, the final changes implemented in this report serve to make it more readable, visually cohesive, and concise. 
 
-In sum, although some of our results differed from Chakraborty's because of differences in analytical methods, conceptualizations, and computational environments, our reproduction results still suggest that PwDs are likely to experience multiple jeopardy based on the convergence of their disability, racial/ethnic minority, and poverty status.
-We reiterate Chakraborty's carefully limited interpretation emphasizing county-level relationships and the need for additional data and research, because the estimated relationship at the county level may not hold at the individual level.
-Interpretation of the results were based on aggregate statistics at the county level and on statistical methods which produce approximate estimates, not inferences.
-Further work is needed to reliably infer relationships between minority PwDs and COVID-19 morbidity and mortality, especially at finer geographic scales.
+# Conclusions
+
+Our attempt to reproduce the original study was partially successful, leading to similar, but inexact results compared to the original study.
+Some of this variability can be attributed to differences in the computational environments and analytical approaches.
+
+However, it's important to highlight that our reanalysis of the study and the introduction of certain parameter changes added a layer of complexity to our findings. 
+Despite these variations, our results provide support for the conclusions drawn in the original study.
+Nevertheless, our reproduction study underscores the critical importance of replication and the need for a comprehensive review of research design elements, including internal validity and sensitivity to key parameters.
+
+In line with the original study, we concur with the author's cautious interpretation, emphasizing the associations at the county level and the necessity for additional data and analysis. 
+It's worth noting that our replication study identified several sources of uncertainty, including ecological fallacy, scale dependency, the modifiable areal unit problem, variable measurement, and spatial dependency.
+
+There is a risk of ecological fallacy with this research design, as interpreting county-level statistics as definitive proof of indevidual-level relationships, especially in counties with small populations, can be problematic, especially given that counties are not weighted by population. Therefore, in this analysis a few people with disabilities in a rural county are collectively weighted as one observation with equal weight to many people with disabilities in an urban county as another observation. This introduces potential scale-dependent biases. 
+
+The modifiable areal unit problem (MAUP) further complicates the analysis, particularly in lgiht of varying county population sizes at the county level, which all carry equal weights in the analysis.
+
+Finally, we must acknowledge the challenges posed by the testing and reporting of COVID-19 cases and uncertainty in the ACS data, which can influence cross-tabulations of demographic characteristics.
+
+Our study attempted to mitigate measurement uncertainty by aggregating data across multiple years and using relatively large geographic units (counties).
+We also considered spatial dependence by clustering county observations based on state and COVID risk classification. 
+However, our approach does not account for spatial dependence between counties in different clusters, even if they are adjacent.
+
+In summary, while our replication results exhibited some disparities from the original study due to methodological and computational differences, they still indicate that individuals with disabilities, particularly those from racial/ethnic minority backgrounds and in poverty, may face heightened vulnerabilities.
+We echo the original study's emphasis on the county-level nature of these associations and the need for further data and research.
+It is crucial to recognize that the relationships observed at the county level may not necessarily hold at the individual level. 
+Further investigations are warranted, especially at finer geographic scales, to reliably infer the relationships between minority individuals with disabilities and COVID-19 morbidity and mortality.
 
 ### Rationale for updated report
 
@@ -2071,4 +2117,4 @@ The first, registered at <https://doi.org/10.17605/OSF.IO/647EX> on July 22, 202
 Subsequently, we improved our approaches to reproduction studies by revising pre-analysis plans and post-analysis reports into legible code RMarkdown documents.
 This change prompted us to re-order some content to flow more linearly with the sequencing required by code, and prompted us to digitize (if necessary) and import results from the original research into Rmarkdown for quantitative comparison to the reproduction study.
 These comparisons led to further insights and research into discrepancies between the original and reproduced Pearsons's correlations between various forms of the Kulldorff spatial scan statistic.
-We also discovered an improved method for comparing the results of generalized linear models by plotting all of the model results on a dot-wisker graph using the dotwhisker package.
+We also discovered an improved method for comparing the results of generalized linear models by plotting all of the model results on a dot-whisker graph using the dot whisker package.
