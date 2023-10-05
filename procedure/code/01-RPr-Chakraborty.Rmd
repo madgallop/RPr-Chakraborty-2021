@@ -366,9 +366,8 @@ acs_covid[is.na(acs_covid$apov_pct), ]$apov_pct <- 0
 
 ```
 
-## Write reuseable function for creating maps
 
-```{r custom map, include = TRUE}
+```{r custom map, eval=TRUE}
 create_custom_map <- function(data, 
                               main_var, 
                               title, 
